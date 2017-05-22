@@ -22,7 +22,11 @@
 
 #ifndef SLUDGE_H
 #define SLUDGE_H
- 
+
+// file header
+#define FORBIDDEN_SYMBOL_ALLOW_ALL
+#include <inttypes.h>
+
 #include "common/random.h"
 #include "engines/engine.h"
 #include "gui/debugger.h"
@@ -37,13 +41,73 @@ struct SludgeGameDescription;
 
 // debug channels
 enum {
-	kSludgeDebugScript = 1 << 0
+	kSludgeDebugScript = 1 << 0,
+	kSludgeDebugDataInit = 1 << 1
 };
  
 class SludgeEngine : public Engine {
 protected:
 	// Engine APIs
 	virtual Common::Error run();
+
+	// print game data
+	typedef struct _FILETIME {
+		uint32_t dwLowDateTime;
+		uint32_t dwHighDateTime;
+	} FILETIME;
+
+	int numBIFNames;
+	char **allBIFNames;
+	int numUserFunc;
+	char **allUserFunc;
+	int numResourceNames;
+	char **allResourceNames;
+	int selectedLanguage;
+	int languageNum;
+	unsigned int winWidth, winHeight;
+	unsigned char * gameIcon;
+	int iconW, iconH;
+	unsigned char * gameLogo;
+	int logoW, logoH;
+
+	int numGlobals;
+
+	int gameVersion;
+	int specialSettings;
+	int desiredfps;
+
+	FILETIME fileTime;
+	FILE * openAndVerify (const char *filename, const char *er, int &fileVersion);
+	int get2bytes (FILE *fp);
+	char * readString (FILE *fp);
+	int32_t get4bytes (FILE *fp);
+	float getFloat (FILE *fp);
+
+	// Language Setting
+	struct settingsStruct
+	{
+		unsigned int languageID;
+		unsigned int numLanguages;
+		bool userFullScreen;
+		unsigned int refreshRate;
+		int antiAlias;
+		bool fixedPixels;
+		bool noStartWindow;
+		bool debugMode;
+	};
+	settingsStruct gameSettings;
+	char ** languageName;
+	int * languageTable;
+	void makeLanguageTable (FILE *table);
+
+	// File indices
+	FILE * bigDataFile = 0;
+	bool sliceBusy = false;
+	uint32_t startIndex, startOfDataIndex, startOfTextIndex, startOfSubIndex, startOfObjectIndex;
+	void setFileIndices (FILE * fp, int, unsigned int);
+
+	// Init Sludge
+	bool initSludge ();
 
 public:
 	SludgeEngine(OSystem *syst, const SludgeGameDescription *gameDesc);
