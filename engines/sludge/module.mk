@@ -3,7 +3,13 @@ MODULE := engines/sludge
 MODULE_OBJS := \
 	detection.o \
 	sludge.o \
-	console.o
+	console.o \
+	builtin.o \
+	moreio.o \
+	variable.o \
+	function.o \
+	fileset.o \
+	language.o
  
 MODULE_DIRS += \
 	engines/sludge

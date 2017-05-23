@@ -20,19 +20,22 @@
  *
  */
 
-#ifndef SLUDGE_VERSION_H
-#define SLUDGE_VERSION_H
+#ifndef SLUDGE_BUILTIN_H
+#define SLUDGE_BUILTIN_H
 
-#define MAJOR_VERSION 2
-#define MINOR_VERSION 2
-#define RELEASE_VERSION 1
-#define BUILD_VERSION 208
-#define TEXT_VERSION "2.2.1"
-#define WHOLE_VERSION (MAJOR_VERSION * 256 + MINOR_VERSION)	// This version
-#define MINIM_VERSION (1 			 * 256 + 2)				// Earliest version of games the engine can run
+#include "function.h"
 
-#define COPYRIGHT_TEXT "\251 Hungry Software and contributors 2000-2014"
+namespace Sludge {
 
-#define VERSION(a,b)	(a * 256 + b)
+enum BuiltReturn {BR_KEEP_AND_PAUSE, BR_ERROR, BR_CONTINUE, BR_PAUSE, BR_CALLAFUNC, BR_ALREADY_GONE};
+
+// define enum values to be function pointers
+typedef BuiltReturn (*BuiltInSludgeFunc)(int numParams, LoadedFunction *fun);
+struct BuiltInFunctionData
+{
+	BuiltInSludgeFunc func;
+};
+
+} // End of namespace Sludge
 
 #endif

@@ -1,5 +1,0 @@
-#define ERROR_VERSION_TOO_LOW_1		"This SLUDGE file requires a more recent version of the SLUDGE engine"
-#define ERROR_VERSION_TOO_LOW_2		"(it was created for v%i.%i).\n\nVisit http://opensludge.github.io/ to download the most recent version."
-#define ERROR_VERSION_TOO_HIGH_1 	"This SLUDGE file was created for an older version of the SLUDGE engine"
-#define ERROR_VERSION_TOO_HIGH_2	"(v%i.%i).\n\nPlease contact the author of this game to obtain a version compatible with your SLUDGE engine (v" TEXT_VERSION ")."
-#define ERROR_BAD_HEADER			"Bad header information... this isn't a valid SLUDGE game"

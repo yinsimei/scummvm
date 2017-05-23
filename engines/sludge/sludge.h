@@ -26,88 +26,129 @@
 // file header
 #define FORBIDDEN_SYMBOL_ALLOW_ALL
 #include <inttypes.h>
+#include <stdio.h>
 
 #include "common/random.h"
 #include "engines/engine.h"
 #include "gui/debugger.h"
- 
-#include "sludge/console.h"
+
+#include "builtin.h"
+#include "console.h"
+#include "function.h"
+#include "language.h"
+#include "variable.h"
 
 namespace Sludge {
  
 class SludgeConsole;
- 
 struct SludgeGameDescription;
 
 // debug channels
 enum {
 	kSludgeDebugScript = 1 << 0,
-	kSludgeDebugDataInit = 1 << 1
+	kSludgeDebugDataInit = 1 << 1,
+	kSludgeDebugBuiltin = 1 << 2,
+	kSludgeDebugStackMachine = 1 << 3,
+	kSludgeDebugFunction = 1 << 4
 };
- 
+
 class SludgeEngine : public Engine {
 protected:
 	// Engine APIs
 	virtual Common::Error run();
 
-	// print game data
-	typedef struct _FILETIME {
+	// Game Data
+//#ifndef _WIN32
+	struct FileTime {
 		uint32_t dwLowDateTime;
 		uint32_t dwHighDateTime;
-	} FILETIME;
+	};
+//#endif
+	int _numBIFNames;
+	char **_allBIFNames;
+	int _numUserFunc;
+	char **_allUserFunc;
+	int _numResourceNames;
+	char **_allResourceNames;
+	int _selectedLanguage;
+	int _languageNum;
+	unsigned int _winWidth, _winHeight;
+	unsigned char * _gameIcon;
+	int _iconW, _iconH;
+	unsigned char * _gameLogo;
+	int _logoW, _logoH;
 
-	int numBIFNames;
-	char **allBIFNames;
-	int numUserFunc;
-	char **allUserFunc;
-	int numResourceNames;
-	char **allResourceNames;
-	int selectedLanguage;
-	int languageNum;
-	unsigned int winWidth, winHeight;
-	unsigned char * gameIcon;
-	int iconW, iconH;
-	unsigned char * gameLogo;
-	int logoW, logoH;
+	int _numGlobals;
+	Variable *_globalVars;
+	int _gameVersion;
+	int _specialSettings;
+	int _desiredfps;
 
-	int numGlobals;
-
-	int gameVersion;
-	int specialSettings;
-	int desiredfps;
-
-	FILETIME fileTime;
-	FILE * openAndVerify (const char *filename, const char *er, int &fileVersion);
-	int get2bytes (FILE *fp);
-	char * readString (FILE *fp);
-	int32_t get4bytes (FILE *fp);
-	float getFloat (FILE *fp);
+	FileTime _fileTime;
+	FILE * openAndVerify(const char *filename, const char *er, int &fileVersion);
+	const char *resourceNameFromNum(int i);
 
 	// Language Setting
-	struct settingsStruct
-	{
-		unsigned int languageID;
-		unsigned int numLanguages;
-		bool userFullScreen;
-		unsigned int refreshRate;
-		int antiAlias;
-		bool fixedPixels;
-		bool noStartWindow;
-		bool debugMode;
-	};
-	settingsStruct gameSettings;
-	char ** languageName;
-	int * languageTable;
-	void makeLanguageTable (FILE *table);
-
-	// File indices
-	FILE * bigDataFile = 0;
-	bool sliceBusy = false;
-	uint32_t startIndex, startOfDataIndex, startOfTextIndex, startOfSubIndex, startOfObjectIndex;
-	void setFileIndices (FILE * fp, int, unsigned int);
+	settingsStruct _gameSettings;
+	char **_languageName;
+	int *_languageTable;
+	void makeLanguageTable(FILE *table);
 
 	// Init Sludge
-	bool initSludge ();
+	bool initSludge();
+
+	// Run Sludge
+	bool runSludge();
+
+
+	// File indices
+	FILE *_bigDataFile;
+	bool _sliceBusy;
+	uint32_t _startIndex, _startOfDataIndex, _startOfTextIndex, _startOfSubIndex, _startOfObjectIndex;
+	void setFileIndices(FILE *fp, unsigned int numLanguages, unsigned int skipBefore);
+	unsigned int openFileFromNum(int num);
+	bool openSubSlice(int num);
+	bool openObjectSlice(int num);
+	char *getNumberedString(int value);
+	bool startAccess();
+	void finishAccess();
+
+	// Variables
+	// Setting variables
+	void initVarNew(Variable &thisVar);
+	void setVariable(Variable &thisVar, VariableType vT, int value);
+	bool copyVariable(const Variable &from, Variable &to);
+	bool loadStringToVar(Variable &thisVar, int value);
+	void addVariablesInSecond(Variable &var1, Variable &var2);
+	void compareVariablesInSecond(const Variable &var1, Variable &var2);
+	void makeTextVar(Variable &thisVar, const char *txt);
+	// Misc.
+	void unlinkVar(Variable &thisVar);
+	char *getTextFromAnyVar(const Variable &from);
+	bool getBoolean(const Variable &from);
+	bool getValueType(int &toHere, VariableType vT, const Variable &v);
+	// Stack
+	void trimStack(VariableStack * &stack);
+	bool addVarToStack(const Variable &va, VariableStack * &thisStack);
+	bool addVarToStackQuick(Variable &va, VariableStack * &thisStack);
+	Variable *stackGetByIndex(VariableStack *vS, unsigned int theIndex);
+	bool stackSetByIndex(VariableStack *vS, unsigned int theIndex, const Variable &va);
+	Variable *fastArrayGetByIndex(FastArrayHandler *vS, int theIndex);
+
+	// Functions
+	VariableStack *_noStack;
+	int _dialogValue;
+	LoadedFunction *_allRunningFunctions;
+	int startNewFunctionNum(unsigned int funcNum, unsigned int numParamsExpected, LoadedFunction *calledBy, VariableStack * &vStack, bool returnSommet = true);
+	bool loadFunctionCode(LoadedFunction *newFunc);
+	void restartFunction(LoadedFunction *fun);
+	bool continueFunction(LoadedFunction *fun);
+	void abortFunction(LoadedFunction *fun);
+	void pauseFunction(LoadedFunction *fun);
+	void finishFunction(LoadedFunction *fun);
+
+	// Built-ins
+	BuiltReturn callBuiltIn(int whichFunc, int numParams, LoadedFunction *fun);
 
 public:
 	SludgeEngine(OSystem *syst, const SludgeGameDescription *gameDesc);

@@ -20,19 +20,54 @@
  *
  */
 
-#ifndef SLUDGE_VERSION_H
-#define SLUDGE_VERSION_H
 
-#define MAJOR_VERSION 2
-#define MINOR_VERSION 2
-#define RELEASE_VERSION 1
-#define BUILD_VERSION 208
-#define TEXT_VERSION "2.2.1"
-#define WHOLE_VERSION (MAJOR_VERSION * 256 + MINOR_VERSION)	// This version
-#define MINIM_VERSION (1 			 * 256 + 2)				// Earliest version of games the engine can run
+#ifndef SLUDGE_VARIABLE_H
+#define SLUDGE_VARIABLE_H
 
-#define COPYRIGHT_TEXT "\251 Hungry Software and contributors 2000-2014"
+namespace Sludge {
 
-#define VERSION(a,b)	(a * 256 + b)
+struct Variable;
+struct VariableStack;
+
+enum VariableType {SVT_NULL, SVT_INT, SVT_FUNC, SVT_STRING,
+				   SVT_BUILT, SVT_FILE, SVT_STACK,
+				   SVT_OBJTYPE, SVT_ANIM, SVT_COSTUME,
+				   SVT_FASTARRAY, SVT_NUM_TYPES};
+
+struct FastArrayHandler {
+	Variable *fastVariables;
+	int size;
+	int	timesUsed;
+};
+
+struct StackHandler {
+	VariableStack *first;
+	VariableStack *last;
+	int	timesUsed;
+};
+
+union VariableData {
+	signed int intValue;
+	char *theString;
+	StackHandler *theStack;
+	struct personaAnimation *animHandler;
+	struct persona *costumeHandler;
+	FastArrayHandler *fastArray;
+};
+
+struct Variable {
+	VariableType varType;
+	VariableData varData;
+};
+
+struct VariableStack {
+	Variable thisVar;
+	VariableStack *next;
+};
+
+bool copyMain(const Variable &from, Variable &to);
+int compareVars(const Variable & var1, const Variable & var2);
+
+} // End of namespace Sludge
 
 #endif

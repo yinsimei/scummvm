@@ -20,19 +20,33 @@
  *
  */
 
-#ifndef SLUDGE_VERSION_H
-#define SLUDGE_VERSION_H
+#define FORBIDDEN_SYMBOL_ALLOW_ALL
+#include "common/debug.h"
 
-#define MAJOR_VERSION 2
-#define MINOR_VERSION 2
-#define RELEASE_VERSION 1
-#define BUILD_VERSION 208
-#define TEXT_VERSION "2.2.1"
-#define WHOLE_VERSION (MAJOR_VERSION * 256 + MINOR_VERSION)	// This version
-#define MINIM_VERSION (1 			 * 256 + 2)				// Earliest version of games the engine can run
+#include "language.h"
+#include "moreio.h"
+#include "sludge.h"
+#include "version.h"
 
-#define COPYRIGHT_TEXT "\251 Hungry Software and contributors 2000-2014"
+namespace Sludge {
 
-#define VERSION(a,b)	(a * 256 + b)
+void SludgeEngine::makeLanguageTable(FILE *table) {
+	_languageTable = new int[_gameSettings.numLanguages + 1];
+	//if (!checkNew(languageTable)) return;
 
-#endif
+	_languageName = new char*[_gameSettings.numLanguages + 1];
+	//if (!checkNew(languageName)) return;
+
+	for (unsigned int i = 0; i <= _gameSettings.numLanguages; ++i) {
+		_languageTable[i] = i ? get2bytes(table) : 0;
+		debug(kSludgeDebugDataInit, "languageTable %i: %i\n", i, _languageTable[i]);
+		_languageName[i] = 0;
+		if (_gameVersion >= VERSION(2,0)) {
+			if (_gameSettings.numLanguages) {
+				_languageName[i] = readString(table);
+			}
+		}
+	}
+}
+
+} // End of namespace Sludge
