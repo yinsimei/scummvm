@@ -63,6 +63,32 @@ static const SludgeGameDescription gameDescriptions[] = {
 		0
 	},
 
+	{
+		{
+			"welcome2",
+			"",
+			AD_ENTRY1("Welcome.slg", "cb1f307c05b8ae4107bcc7f86a3d2f99"),
+			Common::EN_ANY,
+			Common::kPlatformUnknown,
+			ADGF_NO_FLAGS,
+			GUIO0()
+		},
+		0
+	},
+
+	{
+		{
+			"verbCoin",
+			"",
+			AD_ENTRY1("Welcome.slg", "e39ec315dcbf3a1137481f0a5fe1617d"),
+			Common::EN_ANY,
+			Common::kPlatformUnknown,
+			ADGF_NO_FLAGS,
+			GUIO0()
+		},
+		0
+	},
+
 	{ AD_TABLE_END_MARKER, 0 }
 };
 

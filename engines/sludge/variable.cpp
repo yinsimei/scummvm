@@ -154,7 +154,6 @@ void SludgeEngine::compareVariablesInSecond(const Variable & var1, Variable & va
 	setVariable(var2, SVT_INT, compareVars(var1, var2));
 }
 
-
 void SludgeEngine::unlinkVar(Variable &thisVar) {
 	switch (thisVar.varType) {
 		case SVT_STRING:
@@ -294,24 +293,55 @@ bool SludgeEngine::getBoolean(const Variable &from) {
 
 bool SludgeEngine::getValueType(int &toHere, VariableType vT, const Variable &v) {
 	//if (!v) return false;
-		if (v.varType != vT) {
-			char *e1 = joinStrings("Can only perform specified operation on a value which is of type ", typeName[vT]);
-			char *e2 = joinStrings("... value supplied was of type ", typeName[v.varType]);
-			debug("%s %s", e1, e2);
-			return false;
-		}
-		toHere = v.varData.intValue;
-		return true;
+	if (v.varType != vT) {
+		char *e1 = joinStrings("Can only perform specified operation on a value which is of type ", typeName[vT]);
+		char *e2 = joinStrings("... value supplied was of type ", typeName[v.varType]);
+		debug("%s %s", e1, e2);
+		return false;
+	}
+	toHere = v.varData.intValue;
+	return true;
 }
 
 void SludgeEngine::trimStack(VariableStack *&stack) {
 	VariableStack *killMe = stack;
 	stack = stack->next;
 
+	// debug msg
+	debug(kSludgeDebugStackMachine, "Variable of type %s was removed from stack", getTextFromAnyVar(killMe->thisVar));
+
 	// When calling this, we've ALWAYS checked that stack != NULL
 	unlinkVar(killMe->thisVar);
 	delete killMe;
 	killMe = nullptr;
+}
+
+int SludgeEngine::deleteVarFromStack(const Variable &va, VariableStack * &thisStack, bool allOfEm) {
+	VariableStack **huntVar = & thisStack;
+	VariableStack *killMe;
+	int reply = 0;
+
+	while (*huntVar) {
+		if (compareVars((*huntVar)->thisVar, va)) {
+			killMe = *huntVar;
+			*huntVar = killMe->next;
+			unlinkVar(killMe->thisVar);
+			delete killMe;
+			if (!allOfEm) return 1;
+			reply ++;
+		} else {
+			huntVar = &((*huntVar)->next);
+		}
+	}
+	return reply;
+}
+
+VariableStack *SludgeEngine::stackFindLast(VariableStack *hunt) {
+	if (hunt == NULL)
+		return NULL;
+	while (hunt->next)
+		hunt = hunt->next;
+	return hunt;
 }
 
 bool SludgeEngine::addVarToStack(const Variable &va, VariableStack * &thisStack) {
@@ -322,6 +352,9 @@ bool SludgeEngine::addVarToStack(const Variable &va, VariableStack * &thisStack)
 		return false;
 	newStack->next = thisStack;
 	thisStack = newStack;
+
+	// debug msg
+	debug(kSludgeDebugStackMachine, "Variable of type %s was added into stack", getTextFromAnyVar(va));
 	return true;
 }
 
@@ -333,7 +366,69 @@ bool SludgeEngine::addVarToStackQuick(Variable &va, VariableStack * &thisStack) 
 	va.varType = SVT_NULL;
 	newStack->next = thisStack;
 	thisStack = newStack;
+	debug(kSludgeDebugStackMachine, "Variable of type %s was added into stack quick", getTextFromAnyVar(va));
 	return true;
+}
+
+
+bool SludgeEngine::copyStack(const Variable &from, Variable &to) {
+	to.varType = SVT_STACK;
+	to.varData.theStack = new StackHandler;
+	//if (!checkNew(to.varData.theStack)) return false;
+	to.varData.theStack->first = NULL;
+	to.varData.theStack->last = NULL;
+	to.varData.theStack->timesUsed = 1;
+	VariableStack *a = from.varData.theStack->first;
+
+#if DEBUG_STACKINESS
+	{
+		char *str = getTextFromAnyVar(from);
+		stackDebug((stackfp, "in copyStack, copying %s\n", str));
+		delete[] str;
+	}
+#endif
+
+	while (a) {
+		addVarToStack(a->thisVar, to.varData.theStack->first);
+		if (to.varData.theStack->last == NULL)
+		{
+#if DEBUG_STACKINESS
+			stackDebug((stackfp, "LAST"));
+#endif
+			to.varData.theStack->last = to.varData.theStack->first;
+		}
+
+#if DEBUG_STACKINESS
+		{
+			char *str = getTextFromAnyVar(a->thisVar);
+			stackDebug((stackfp, "\ta->thisVar = %s (%p)\n", str, to.varData.theStack->first));
+			delete[] str;
+		}
+#endif
+
+		a = a->next;
+	}
+
+#if DEBUG_STACKINESS
+	{
+		char *str = getTextFromAnyVar(to);
+		stackDebug((stackfp, "finished copy, got %s\n", str));
+		delete[] str;
+		stackDebug((stackfp, "first = %p\n", to.varData.theStack->first));
+		stackDebug((stackfp, "last = %p\n", to.varData.theStack->last));
+	}
+#endif
+	return true;
+}
+
+int SludgeEngine::stackSize(const StackHandler *me) {
+	int r = 0;
+	VariableStack *a = me->first;
+	while (a) {
+		++r;
+		a = a->next;
+	}
+	return r;
 }
 
 bool SludgeEngine::stackSetByIndex(VariableStack *vS, unsigned int theIndex, const Variable &va) {
@@ -355,6 +450,39 @@ Variable *SludgeEngine::stackGetByIndex(VariableStack *vS, unsigned int theIndex
 		}
 	}
 	return &(vS->thisVar);
+}
+
+bool SludgeEngine::makeFastArrayFromStack(Variable &to, const StackHandler *stacky) {
+	int size = stackSize(stacky);
+	if (!makeFastArraySize (to, size)) return false;
+
+	// Now let's fill up the new array
+	VariableStack * allV = stacky->first;
+	size = 0;
+	while (allV) {
+		copyMain(allV->thisVar, to.varData.fastArray->fastVariables[size]);
+		++size;
+		allV = allV->next;
+	}
+	return true;
+}
+bool SludgeEngine::makeFastArraySize(Variable &to, int size) {
+	if (size < 0) {
+		debug("Can't create a fast array with a negative number of elements!");
+		return false;
+	}
+	unlinkVar(to);
+	to.varType = SVT_FASTARRAY;
+	to.varData.fastArray = new FastArrayHandler;
+	//if (!checkNew(to.varData.fastArray)) return false;
+	to.varData.fastArray->fastVariables = new Variable[size];
+	//if (!checkNew(to.varData.fastArray->fastVariables)) return false;
+	for (int i = 0; i < size; i ++) {
+		initVarNew(to.varData.fastArray->fastVariables[i]);
+	}
+	to.varData.fastArray->size = size;
+	to.varData.fastArray->timesUsed = 1;
+	return true;
 }
 
 Variable *SludgeEngine::fastArrayGetByIndex(FastArrayHandler *vS, int theIndex) {

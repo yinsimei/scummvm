@@ -54,6 +54,8 @@ enum {
 
 class SludgeEngine : public Engine {
 protected:
+	friend class SludgeBuiltIn;
+
 	// Engine APIs
 	virtual Common::Error run();
 
@@ -100,7 +102,6 @@ protected:
 	// Run Sludge
 	bool runSludge();
 
-
 	// File indices
 	FILE *_bigDataFile;
 	bool _sliceBusy;
@@ -129,10 +130,17 @@ protected:
 	bool getValueType(int &toHere, VariableType vT, const Variable &v);
 	// Stack
 	void trimStack(VariableStack * &stack);
+	int deleteVarFromStack(const Variable &va, VariableStack * &thisStack, bool allOfEm = false);
+	VariableStack *stackFindLast(VariableStack *hunt);
 	bool addVarToStack(const Variable &va, VariableStack * &thisStack);
 	bool addVarToStackQuick(Variable &va, VariableStack * &thisStack);
+	bool copyStack(const Variable &from, Variable &to);
+	int stackSize(const StackHandler *me);
 	Variable *stackGetByIndex(VariableStack *vS, unsigned int theIndex);
 	bool stackSetByIndex(VariableStack *vS, unsigned int theIndex, const Variable &va);
+
+	bool makeFastArrayFromStack(Variable &to, const StackHandler *stacky);
+	bool makeFastArraySize(Variable &to, int size);
 	Variable *fastArrayGetByIndex(FastArrayHandler *vS, int theIndex);
 
 	// Functions
@@ -146,9 +154,14 @@ protected:
 	void abortFunction(LoadedFunction *fun);
 	void pauseFunction(LoadedFunction *fun);
 	void finishFunction(LoadedFunction *fun);
+	void freezeSubs();
+	void unfreezeSubs();
+	void completeTimers();
+	void killSpeechTimers();
+	int cancelAFunction(int funcNum, LoadedFunction *myself, bool &killedMyself);
 
-	// Built-ins
-	BuiltReturn callBuiltIn(int whichFunc, int numParams, LoadedFunction *fun);
+	// Built-in functions
+	SludgeBuiltIn *_builtins;
 
 public:
 	SludgeEngine(OSystem *syst, const SludgeGameDescription *gameDesc);

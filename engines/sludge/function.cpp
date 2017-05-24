@@ -181,7 +181,7 @@ bool SludgeEngine::continueFunction(LoadedFunction *fun) {
 
 					case SVT_BUILT: {
 						debug(kSludgeDebugStackMachine, "SVT_BUILT");
-						BuiltReturn br = callBuiltIn(fun->reg.varData.intValue, param, fun);
+						BuiltReturn br = _builtins->callBuiltIn(fun->reg.varData.intValue, param, fun);
 						switch (br) {
 							case BR_ERROR:
 								debug(kSludgeDebugStackMachine, "Failing to call built-in function. Unknown error. This shouldn't happen.");
@@ -602,6 +602,68 @@ void SludgeEngine::finishFunction(LoadedFunction *fun) {
 	unlinkVar(fun->reg);
 	delete fun;
 	fun = nullptr;
+}
+
+void SludgeEngine::freezeSubs() {
+	LoadedFunction *thisFunction = _allRunningFunctions;
+
+	while (thisFunction) {
+		if (thisFunction->unfreezable) {
+			//msgBox ("SLUDGE debugging bollocks!", "Trying to freeze an unfreezable function!");
+		} else {
+			thisFunction->freezerLevel ++;
+		}
+		thisFunction = thisFunction->next;
+	}
+}
+
+void SludgeEngine::unfreezeSubs() {
+	LoadedFunction *thisFunction = _allRunningFunctions;
+
+	while (thisFunction) {
+		if (thisFunction->freezerLevel) thisFunction->freezerLevel --;
+		thisFunction = thisFunction->next;
+	}
+}
+
+void SludgeEngine::completeTimers() {
+	LoadedFunction *thisFunction = _allRunningFunctions;
+
+	while (thisFunction) {
+		if (thisFunction->freezerLevel == 0) thisFunction->timeLeft = 0;
+		thisFunction = thisFunction->next;
+	}
+}
+
+void SludgeEngine::killSpeechTimers() {
+	LoadedFunction *thisFunction = _allRunningFunctions;
+
+	while (thisFunction) {
+		if (thisFunction->freezerLevel == 0 && thisFunction->isSpeech && thisFunction->timeLeft) {
+			thisFunction->timeLeft = 0;
+			thisFunction->isSpeech = false;
+		}
+		thisFunction = thisFunction->next;
+	}
+
+	//TODO: haven't any speech now
+	//killAllSpeech();
+}
+
+int SludgeEngine::cancelAFunction(int funcNum, LoadedFunction *myself, bool &killedMyself) {
+	int n = 0;
+	killedMyself = false;
+	LoadedFunction *fun = _allRunningFunctions;
+	while (fun) {
+		if (fun->originalNumber == funcNum) {
+			fun->cancelMe = true;
+			++n;
+			if (fun == myself)
+				killedMyself = true;
+		}
+		fun = fun->next;
+	}
+	return n;
 }
 
 } // End of namespace Sludge

@@ -52,6 +52,9 @@ SludgeEngine::SludgeEngine(OSystem *syst, const SludgeGameDescription *gameDesc)
 	DebugMan.addDebugChannel(kSludgeDebugStackMachine, "Stack Machine", "Stack Machine debug level");
 	DebugMan.addDebugChannel(kSludgeDebugFunction, "Function", "Function debug level");
 
+	// add built-in function manager
+	_builtins = new SludgeBuiltIn(this);
+
 	// check init
 	debug("SludgeEngine::SludgeEngine");
 }
@@ -60,6 +63,11 @@ SludgeEngine::~SludgeEngine() {
 
 	// Dispose resources
 	delete _rnd;
+	_rnd = nullptr;
+
+	// Free built-in function manager
+	delete _builtins;
+	_builtins = nullptr;
  
 	// Remove debug levels
 	DebugMan.clearAllDebugChannels();
