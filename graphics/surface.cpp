@@ -33,10 +33,10 @@ namespace Graphics {
 
 template<typename T>
 static void plotPoint(int x, int y, int color, void *data) {
-	Surface *s = (Surface *)data;
+	Surface *s = (Surface *) data;
 	if (x >= 0 && x < s->w && y >= 0 && y < s->h) {
-		T *ptr = (T *)s->getBasePtr(x, y);
-		*ptr = (T)color;
+		T *ptr = (T *) s->getBasePtr(x, y);
+		*ptr = (T) color;
 	}
 }
 
@@ -51,13 +51,17 @@ void Surface::drawLine(int x0, int y0, int x1, int y1, uint32 color) {
 		error("Surface::drawLine: bytesPerPixel must be 1, 2, or 4");
 }
 
-void Surface::drawThickLine(int x0, int y0, int x1, int y1, int penX, int penY, uint32 color) {
+void Surface::drawThickLine(int x0, int y0, int x1, int y1, int penX, int penY,
+		uint32 color) {
 	if (format.bytesPerPixel == 1)
-		Graphics::drawThickLine(x0, y0, x1, y1, penX, penY, color, plotPoint<byte>, this);
+		Graphics::drawThickLine(x0, y0, x1, y1, penX, penY, color,
+				plotPoint<byte>, this);
 	else if (format.bytesPerPixel == 2)
-		Graphics::drawThickLine(x0, y0, x1, y1, penX, penY, color, plotPoint<uint16>, this);
+		Graphics::drawThickLine(x0, y0, x1, y1, penX, penY, color,
+				plotPoint<uint16>, this);
 	else if (format.bytesPerPixel == 4)
-		Graphics::drawThickLine(x0, y0, x1, y1, penX, penY, color, plotPoint<uint32>, this);
+		Graphics::drawThickLine(x0, y0, x1, y1, penX, penY, color,
+				plotPoint<uint32>, this);
 	else
 		error("Surface::drawThickLine: bytesPerPixel must be 1, 2, or 4");
 }
@@ -83,7 +87,8 @@ void Surface::free() {
 	format = PixelFormat();
 }
 
-void Surface::init(uint16 width, uint16 height, uint16 newPitch, void *newPixels, const PixelFormat &f) {
+void Surface::init(uint16 width, uint16 height, uint16 newPitch,
+		void *newPixels, const PixelFormat &f) {
 	w = width;
 	h = height;
 	pitch = newPitch;
@@ -96,8 +101,8 @@ void Surface::copyFrom(const Surface &surf) {
 	if (surf.pitch == pitch) {
 		memcpy(pixels, surf.pixels, h * pitch);
 	} else {
-		const byte *src = (const byte *)surf.pixels;
-		byte *dst = (byte *)pixels;
+		const byte *src = (const byte *) surf.pixels;
+		byte *dst = (byte *) pixels;
 		for (int y = h; y > 0; --y) {
 			memcpy(dst, src, w * format.bytesPerPixel);
 			src += surf.pitch;
@@ -134,7 +139,8 @@ const Surface Surface::getSubArea(const Common::Rect &area) const {
 	return subSurface;
 }
 
-void Surface::copyRectToSurface(const void *buffer, int srcPitch, int destX, int destY, int width, int height) {
+void Surface::copyRectToSurface(const void *buffer, int srcPitch, int destX,
+		int destY, int width, int height) {
 	assert(buffer);
 
 	assert(destX >= 0 && destX < w);
@@ -143,8 +149,8 @@ void Surface::copyRectToSurface(const void *buffer, int srcPitch, int destX, int
 	assert(width > 0 && destX + width <= w);
 
 	// Copy buffer data to internal buffer
-	const byte *src = (const byte *)buffer;
-	byte *dst = (byte *)getBasePtr(destX, destY);
+	const byte *src = (const byte *) buffer;
+	byte *dst = (byte *) getBasePtr(destX, destY);
 	for (int i = 0; i < height; i++) {
 		memcpy(dst, src, width * format.bytesPerPixel);
 		src += srcPitch;
@@ -152,10 +158,12 @@ void Surface::copyRectToSurface(const void *buffer, int srcPitch, int destX, int
 	}
 }
 
-void Surface::copyRectToSurface(const Graphics::Surface &srcSurface, int destX, int destY, const Common::Rect subRect) {
+void Surface::copyRectToSurface(const Graphics::Surface &srcSurface, int destX,
+		int destY, const Common::Rect subRect) {
 	assert(srcSurface.format == format);
 
-	copyRectToSurface(srcSurface.getBasePtr(subRect.left, subRect.top), srcSurface.pitch, destX, destY, subRect.width(), subRect.height());
+	copyRectToSurface(srcSurface.getBasePtr(subRect.left, subRect.top),
+			srcSurface.pitch, destX, destY, subRect.width(), subRect.height());
 }
 
 void Surface::hLine(int x, int y, int x2, uint32 color) {
@@ -175,13 +183,13 @@ void Surface::hLine(int x, int y, int x2, uint32 color) {
 		return;
 
 	if (format.bytesPerPixel == 1) {
-		byte *ptr = (byte *)getBasePtr(x, y);
-		memset(ptr, (byte)color, x2 - x + 1);
+		byte *ptr = (byte *) getBasePtr(x, y);
+		memset(ptr, (byte) color, x2 - x + 1);
 	} else if (format.bytesPerPixel == 2) {
-		uint16 *ptr = (uint16 *)getBasePtr(x, y);
-		Common::fill(ptr, ptr + (x2 - x + 1), (uint16)color);
+		uint16 *ptr = (uint16 *) getBasePtr(x, y);
+		Common::fill(ptr, ptr + (x2 - x + 1), (uint16) color);
 	} else if (format.bytesPerPixel == 4) {
-		uint32 *ptr = (uint32 *)getBasePtr(x, y);
+		uint32 *ptr = (uint32 *) getBasePtr(x, y);
 		Common::fill(ptr, ptr + (x2 - x + 1), color);
 	} else {
 		error("Surface::hLine: bytesPerPixel must be 1, 2, or 4");
@@ -202,20 +210,20 @@ void Surface::vLine(int x, int y, int y2, uint32 color) {
 		y2 = h - 1;
 
 	if (format.bytesPerPixel == 1) {
-		byte *ptr = (byte *)getBasePtr(x, y);
+		byte *ptr = (byte *) getBasePtr(x, y);
 		while (y++ <= y2) {
-			*ptr = (byte)color;
+			*ptr = (byte) color;
 			ptr += pitch;
 		}
 	} else if (format.bytesPerPixel == 2) {
-		uint16 *ptr = (uint16 *)getBasePtr(x, y);
+		uint16 *ptr = (uint16 *) getBasePtr(x, y);
 		while (y++ <= y2) {
-			*ptr = (uint16)color;
+			*ptr = (uint16) color;
 			ptr += pitch / 2;
 		}
 
 	} else if (format.bytesPerPixel == 4) {
-		uint32 *ptr = (uint32 *)getBasePtr(x, y);
+		uint32 *ptr = (uint32 *) getBasePtr(x, y);
 		while (y++ <= y2) {
 			*ptr = color;
 			ptr += pitch / 4;
@@ -238,7 +246,7 @@ void Surface::fillRect(Common::Rect r, uint32 color) {
 
 	if (format.bytesPerPixel == 2) {
 		lineLen *= 2;
-		if ((uint16)color != ((color & 0xff) | (color & 0xff) << 8))
+		if ((uint16) color != ((color & 0xff) | (color & 0xff) << 8))
 			useMemset = false;
 	} else if (format.bytesPerPixel == 4) {
 		useMemset = false;
@@ -247,20 +255,20 @@ void Surface::fillRect(Common::Rect r, uint32 color) {
 	}
 
 	if (useMemset) {
-		byte *ptr = (byte *)getBasePtr(r.left, r.top);
+		byte *ptr = (byte *) getBasePtr(r.left, r.top);
 		while (height--) {
-			memset(ptr, (byte)color, lineLen);
+			memset(ptr, (byte) color, lineLen);
 			ptr += pitch;
 		}
 	} else {
 		if (format.bytesPerPixel == 2) {
-			uint16 *ptr = (uint16 *)getBasePtr(r.left, r.top);
+			uint16 *ptr = (uint16 *) getBasePtr(r.left, r.top);
 			while (height--) {
-				Common::fill(ptr, ptr + width, (uint16)color);
+				Common::fill(ptr, ptr + width, (uint16) color);
 				ptr += pitch / 2;
 			}
 		} else {
-			uint32 *ptr = (uint32 *)getBasePtr(r.left, r.top);
+			uint32 *ptr = (uint32 *) getBasePtr(r.left, r.top);
 			while (height--) {
 				Common::fill(ptr, ptr + width, color);
 				ptr += pitch / 4;
@@ -281,7 +289,8 @@ void Surface::move(int dx, int dy, int height) {
 	if ((dx == 0 && dy == 0) || height <= 0)
 		return;
 
-	if (format.bytesPerPixel != 1 && format.bytesPerPixel != 2 && format.bytesPerPixel != 4)
+	if (format.bytesPerPixel != 1 && format.bytesPerPixel != 2
+			&& format.bytesPerPixel != 4)
 		error("Surface::move: bytesPerPixel must be 1, 2, or 4");
 
 	byte *src, *dst;
@@ -290,7 +299,7 @@ void Surface::move(int dx, int dy, int height) {
 	// vertical movement
 	if (dy > 0) {
 		// move down - copy from bottom to top
-		dst = (byte *)pixels + (height - 1) * pitch;
+		dst = (byte *) pixels + (height - 1) * pitch;
 		src = dst - dy * pitch;
 		for (y = dy; y < height; y++) {
 			memcpy(dst, src, pitch);
@@ -299,7 +308,7 @@ void Surface::move(int dx, int dy, int height) {
 		}
 	} else if (dy < 0) {
 		// move up - copy from top to bottom
-		dst = (byte *)pixels;
+		dst = (byte *) pixels;
 		src = dst - dy * pitch;
 		for (y = -dy; y < height; y++) {
 			memcpy(dst, src, pitch);
@@ -311,18 +320,18 @@ void Surface::move(int dx, int dy, int height) {
 	// horizontal movement
 	if (dx > 0) {
 		// move right - copy from right to left
-		dst = (byte *)pixels + (pitch - format.bytesPerPixel);
+		dst = (byte *) pixels + (pitch - format.bytesPerPixel);
 		src = dst - (dx * format.bytesPerPixel);
 		for (y = 0; y < height; y++) {
 			for (x = dx; x < w; x++) {
 				if (format.bytesPerPixel == 1) {
 					*dst-- = *src--;
 				} else if (format.bytesPerPixel == 2) {
-					*(uint16 *)dst = *(const uint16 *)src;
+					*(uint16 *) dst = *(const uint16 *) src;
 					src -= 2;
 					dst -= 2;
 				} else if (format.bytesPerPixel == 4) {
-					*(uint32 *)dst = *(const uint32 *)src;
+					*(uint32 *) dst = *(const uint32 *) src;
 					src -= 4;
 					dst -= 4;
 				}
@@ -330,20 +339,20 @@ void Surface::move(int dx, int dy, int height) {
 			src += pitch + (pitch - dx * format.bytesPerPixel);
 			dst += pitch + (pitch - dx * format.bytesPerPixel);
 		}
-	} else if (dx < 0)  {
+	} else if (dx < 0) {
 		// move left - copy from left to right
-		dst = (byte *)pixels;
+		dst = (byte *) pixels;
 		src = dst - (dx * format.bytesPerPixel);
 		for (y = 0; y < height; y++) {
 			for (x = -dx; x < w; x++) {
 				if (format.bytesPerPixel == 1) {
 					*dst++ = *src++;
 				} else if (format.bytesPerPixel == 2) {
-					*(uint16 *)dst = *(const uint16 *)src;
+					*(uint16 *) dst = *(const uint16 *) src;
 					src += 2;
 					dst += 2;
 				} else if (format.bytesPerPixel == 4) {
-					*(uint32 *)dst = *(const uint32 *)src;
+					*(uint32 *) dst = *(const uint32 *) src;
 					src += 4;
 					dst += 4;
 				}
@@ -354,21 +363,24 @@ void Surface::move(int dx, int dy, int height) {
 	}
 }
 
-void Surface::convertToInPlace(const PixelFormat &dstFormat, const byte *palette) {
+void Surface::convertToInPlace(const PixelFormat &dstFormat,
+		const byte *palette) {
 	// Do not convert to the same format and ignore empty surfaces.
 	if (format == dstFormat || pixels == 0) {
 		return;
 	}
 
 	if (format.bytesPerPixel == 0 || format.bytesPerPixel > 4)
-		error("Surface::convertToInPlace(): Can only convert from 1Bpp, 2Bpp, 3Bpp, and 4Bpp");
+		error(
+				"Surface::convertToInPlace(): Can only convert from 1Bpp, 2Bpp, 3Bpp, and 4Bpp");
 
 	if (dstFormat.bytesPerPixel != 2 && dstFormat.bytesPerPixel != 4)
 		error("Surface::convertToInPlace(): Can only convert to 2Bpp and 4Bpp");
 
 	// In case the surface data needs more space allocate it.
 	if (dstFormat.bytesPerPixel > format.bytesPerPixel) {
-		void *const newPixels = realloc(pixels, w * h * dstFormat.bytesPerPixel);
+		void * const newPixels = realloc(pixels,
+				w * h * dstFormat.bytesPerPixel);
 		if (!newPixels) {
 			error("Surface::convertToInPlace(): Out of memory");
 		}
@@ -383,8 +395,9 @@ void Surface::convertToInPlace(const PixelFormat &dstFormat, const byte *palette
 		assert(palette);
 
 		for (int y = h; y > 0; --y) {
-			const byte *srcRow = (const byte *)pixels + y * pitch - 1;
-			byte *dstRow = (byte *)pixels + y * w * dstFormat.bytesPerPixel - dstFormat.bytesPerPixel;
+			const byte *srcRow = (const byte *) pixels + y * pitch - 1;
+			byte *dstRow = (byte *) pixels + y * w * dstFormat.bytesPerPixel
+					- dstFormat.bytesPerPixel;
 
 			for (int x = 0; x < w; x++) {
 				byte index = *srcRow--;
@@ -395,20 +408,22 @@ void Surface::convertToInPlace(const PixelFormat &dstFormat, const byte *palette
 				uint32 color = dstFormat.RGBToColor(r, g, b);
 
 				if (dstFormat.bytesPerPixel == 2)
-					*((uint16 *)dstRow) = color;
+					*((uint16 *) dstRow) = color;
 				else
-					*((uint32 *)dstRow) = color;
+					*((uint32 *) dstRow) = color;
 
 				dstRow -= dstFormat.bytesPerPixel;
 			}
 		}
 	} else {
-		crossBlit((byte *)pixels, (const byte *)pixels, w * dstFormat.bytesPerPixel, pitch, w, h, dstFormat, format);
+		crossBlit((byte *) pixels, (const byte *) pixels,
+				w * dstFormat.bytesPerPixel, pitch, w, h, dstFormat, format);
 	}
 
 	// In case the surface data got smaller, free up some memory.
 	if (dstFormat.bytesPerPixel < format.bytesPerPixel) {
-		void *const newPixels = realloc(pixels, w * h * dstFormat.bytesPerPixel);
+		void * const newPixels = realloc(pixels,
+				w * h * dstFormat.bytesPerPixel);
 		if (!newPixels) {
 			error("Surface::convertToInPlace(): Freeing memory failed");
 		}
@@ -420,7 +435,8 @@ void Surface::convertToInPlace(const PixelFormat &dstFormat, const byte *palette
 	pitch = w * dstFormat.bytesPerPixel;
 }
 
-Graphics::Surface *Surface::convertTo(const PixelFormat &dstFormat, const byte *palette) const {
+Graphics::Surface *Surface::convertTo(const PixelFormat &dstFormat,
+		const byte *palette) const {
 	assert(pixels);
 
 	Graphics::Surface *surface = new Graphics::Surface();
@@ -432,7 +448,8 @@ Graphics::Surface *Surface::convertTo(const PixelFormat &dstFormat, const byte *
 	}
 
 	if (format.bytesPerPixel == 0 || format.bytesPerPixel > 4)
-		error("Surface::convertTo(): Can only convert from 1Bpp, 2Bpp, 3Bpp, and 4Bpp");
+		error(
+				"Surface::convertTo(): Can only convert from 1Bpp, 2Bpp, 3Bpp, and 4Bpp");
 
 	if (dstFormat.bytesPerPixel != 2 && dstFormat.bytesPerPixel != 4)
 		error("Surface::convertTo(): Can only convert to 2Bpp and 4Bpp");
@@ -444,8 +461,8 @@ Graphics::Surface *Surface::convertTo(const PixelFormat &dstFormat, const byte *
 		assert(palette);
 
 		for (int y = 0; y < h; y++) {
-			const byte *srcRow = (const byte *)getBasePtr(0, y);
-			byte *dstRow = (byte *)surface->getBasePtr(0, y);
+			const byte *srcRow = (const byte *) getBasePtr(0, y);
+			byte *dstRow = (byte *) surface->getBasePtr(0, y);
 
 			for (int x = 0; x < w; x++) {
 				byte index = *srcRow++;
@@ -456,9 +473,9 @@ Graphics::Surface *Surface::convertTo(const PixelFormat &dstFormat, const byte *
 				uint32 color = dstFormat.RGBToColor(r, g, b);
 
 				if (dstFormat.bytesPerPixel == 2)
-					*((uint16 *)dstRow) = color;
+					*((uint16 *) dstRow) = color;
 				else
-					*((uint32 *)dstRow) = color;
+					*((uint32 *) dstRow) = color;
 
 				dstRow += dstFormat.bytesPerPixel;
 			}
@@ -466,8 +483,8 @@ Graphics::Surface *Surface::convertTo(const PixelFormat &dstFormat, const byte *
 	} else {
 		// Converting from high color to high color
 		for (int y = 0; y < h; y++) {
-			const byte *srcRow = (const byte *)getBasePtr(0, y);
-			byte *dstRow = (byte *)surface->getBasePtr(0, y);
+			const byte *srcRow = (const byte *) getBasePtr(0, y);
+			byte *dstRow = (byte *) surface->getBasePtr(0, y);
 
 			for (int x = 0; x < w; x++) {
 				uint32 srcColor;
@@ -486,9 +503,9 @@ Graphics::Surface *Surface::convertTo(const PixelFormat &dstFormat, const byte *
 				uint32 color = dstFormat.ARGBToColor(a, r, g, b);
 
 				if (dstFormat.bytesPerPixel == 2)
-					*((uint16 *)dstRow) = color;
+					*((uint16 *) dstRow) = color;
 				else
-					*((uint32 *)dstRow) = color;
+					*((uint32 *) dstRow) = color;
 
 				dstRow += dstFormat.bytesPerPixel;
 			}
@@ -498,7 +515,8 @@ Graphics::Surface *Surface::convertTo(const PixelFormat &dstFormat, const byte *
 	return surface;
 }
 
-FloodFill::FloodFill(Graphics::Surface *surface, uint32 oldColor, uint32 fillColor, bool maskMode) {
+FloodFill::FloodFill(Graphics::Surface *surface, uint32 oldColor,
+		uint32 fillColor, bool maskMode) {
 	_surface = surface;
 	_oldColor = oldColor;
 	_fillColor = fillColor;
@@ -513,11 +531,11 @@ FloodFill::FloodFill(Graphics::Surface *surface, uint32 oldColor, uint32 fillCol
 		_mask->create(_w, _h, Graphics::PixelFormat::createFormatCLUT8()); // Uses calloc()
 	}
 
-	_visited = (byte *)calloc(_w * _h, 1);
+	_visited = (byte *) calloc(_w * _h, 1);
 }
 
 FloodFill::~FloodFill() {
-	while(!_queue.empty()) {
+	while (!_queue.empty()) {
 		Common::Point *p = _queue.front();
 
 		delete p;
@@ -544,8 +562,8 @@ void FloodFill::addSeed(int x, int y) {
 				dst = src;
 
 			if (_surface->format.bytesPerPixel == 1) {
-				if (*((byte *)src) == _oldColor) {
-					*((byte *)dst) = _maskMode ? 255 : _fillColor;
+				if (*((byte *) src) == _oldColor) {
+					*((byte *) dst) = _maskMode ? 255 : _fillColor;
 					changed = true;
 				}
 			} else if (_surface->format.bytesPerPixel == 2) {
@@ -553,7 +571,7 @@ void FloodFill::addSeed(int x, int y) {
 					if (!_maskMode)
 						WRITE_UINT16(src, _fillColor);
 					else
-						*((byte *)dst) = 255;
+						*((byte *) dst) = 255;
 
 					changed = true;
 				}
@@ -562,7 +580,7 @@ void FloodFill::addSeed(int x, int y) {
 					if (!_maskMode)
 						WRITE_UINT32(src, _fillColor);
 					else
-						*((byte *)dst) = 255;
+						*((byte *) dst) = 255;
 
 					changed = true;
 				}
@@ -583,10 +601,10 @@ void FloodFill::fill() {
 	while (!_queue.empty()) {
 		Common::Point *p = _queue.front();
 		_queue.pop_front();
-		addSeed(p->x    , p->y - 1);
-		addSeed(p->x - 1, p->y    );
-		addSeed(p->x    , p->y + 1);
-		addSeed(p->x + 1, p->y    );
+		addSeed(p->x, p->y - 1);
+		addSeed(p->x - 1, p->y);
+		addSeed(p->x, p->y + 1);
+		addSeed(p->x + 1, p->y);
 
 		delete p;
 	}
